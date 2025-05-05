@@ -330,7 +330,7 @@ type Exp_<
       >;
 
 
-type Exp<rat extends Rational = IntegerToRational<One>, stepsCount extends number = 3> =
+type Exp<rat extends Rational = IntegerToRational<One>, stepsCount extends PositiveInteger = One> =
   Exp_<rat, stepsCount>;
 
 type e = Exp
