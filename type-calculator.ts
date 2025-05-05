@@ -70,6 +70,11 @@ type PositiveGreaterThanOrEqual<num1 extends PositiveInteger, num2 extends Posit
     ? true
     : PositiveGreaterThan<num1, num2>;
 
+type PositiveLessThanOrEqual<num1 extends PositiveInteger, num2 extends PositiveInteger> =
+  Eq<num1, num2> extends true
+    ? true
+    : PositiveLessThan<num1, num2>;
+
 type PositiveDecrementWhileBothNoneZero__<num1 extends PositiveInteger, num2 extends PositiveInteger> =
   num1 extends Zero
     ? num2 extends Zero
@@ -330,12 +335,50 @@ type Exp_<
       >;
 
 
-type Exp<rat extends Rational = IntegerToRational<One>, stepsCount extends PositiveInteger = One> =
+type Exp<rat extends Rational = IntegerToRational<One>, stepsCount extends PositiveInteger = '.....'> =
   Exp_<rat, stepsCount>;
 
-type e = Exp
-type a = StringToInteger<'101'>;
-type b = StringToInteger<'-1010'>;
-type c = RationalToString<SimplifyRational<e>>
-type d = IntegerToString<Factorial<a>>
-type R = IntegerToString<'-.....'>
+type RationalToStringWithPrecision_2<
+  rat extends Rational,
+  fractionPartSize extends PositiveInteger,
+> =
+  fractionPartSize extends Zero
+    ? ''
+    : rat extends [infer numerator extends PositiveInteger, infer denominator extends PositiveInteger]
+      ? Divide<Multiply<numerator, Two>, denominator> extends [infer integerPart extends PositiveInteger, infer fractionPart extends PositiveInteger]
+        ? `${
+            IntegerToString<integerPart>
+          }${
+            RationalToStringWithPrecision_2<
+              [fractionPart, denominator],
+              DecrementPositive<fractionPartSize>
+            >
+          }`
+        : never
+      : never;
+
+
+type RationalToStringWithPrecision_1<rat extends Rational, fractionPartSize extends PositiveInteger> =
+  rat extends [infer numerator extends Integer, infer denominator extends Integer]
+    ? Divide<numerator, denominator> extends [infer integerPart extends Integer, infer fractionPart extends Integer]
+      ? `${
+          IntegerToString<integerPart>
+        }.${
+          RationalToStringWithPrecision_2<
+            [fractionPart, denominator],
+            fractionPartSize
+          >
+        }`
+      : never
+    : never;
+  ;
+
+type RationalToStringWithPrecision<rat extends Rational, fractionPartSize extends PositiveInteger> =
+  RationalNormalizeSign<rat> extends [infer numerator extends Integer, infer denominator extends Integer]
+    ? IsNegative<numerator> extends true
+      ? `-${RationalToStringWithPrecision_1<
+          [Negate<numerator>, denominator],
+          fractionPartSize
+        >}`
+      : RationalToStringWithPrecision_1<rat, fractionPartSize>
+    : never;
