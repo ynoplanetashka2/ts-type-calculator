@@ -382,3 +382,125 @@ type RationalToStringWithPrecision<rat extends Rational, fractionPartSize extend
         >}`
       : RationalToStringWithPrecision_1<rat, fractionPartSize>
     : never;
+
+type Ten = '..........';
+type DecimalDigit = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9';
+type DecimalString = string;
+
+type ReverseDecimalString_<str extends DecimalString, acc extends DecimalString = ''> =
+  str extends ''
+    ? acc
+    : str extends `${infer digit extends DecimalDigit}${infer rest}`
+      ? ReverseDecimalString_<rest, `${acc}${digit}`>
+      : never;
+
+type ReverseDecimalString<str extends DecimalString> =
+  ReverseDecimalString_<str>;
+
+type DecimalStringToPositiveInteger<
+  str extends DecimalString
+> =
+  str extends ''
+    ? Zero
+    : str extends `${infer rest}0`
+      ? MultiplyPositive<Ten, DecimalStringToPositiveInteger<rest>>
+      : str extends `${infer rest}1`
+        ? AddPositive<
+            MultiplyPositive<Ten, DecimalStringToPositiveInteger<rest>>,
+            '.'
+          >
+        : str extends `${infer rest}2`
+          ? AddPositive<
+              MultiplyPositive<Ten, DecimalStringToPositiveInteger<rest>>,
+              '..'
+            >
+          : str extends `${infer rest}3`
+            ? AddPositive<
+                MultiplyPositive<Ten, DecimalStringToPositiveInteger<rest>>,
+                '...'
+              >
+            : str extends `${infer rest}4`
+              ? AddPositive<
+                  MultiplyPositive<Ten, DecimalStringToPositiveInteger<rest>>,
+                  '....'
+                >
+              : str extends `${infer rest}5`
+                ? AddPositive<
+                    MultiplyPositive<Ten, DecimalStringToPositiveInteger<rest>>,
+                    '.....'
+                  >
+                : str extends `${infer rest}6`
+                  ? AddPositive<
+                      MultiplyPositive<Ten, DecimalStringToPositiveInteger<rest>>,
+                      '......'
+                    >
+                  : str extends `${infer rest}7`
+                    ? AddPositive<
+                        MultiplyPositive<Ten, DecimalStringToPositiveInteger<rest>>,
+                        '.......'
+                      >
+                    : str extends `${infer rest}8`
+                      ? AddPositive<
+                          MultiplyPositive<Ten, DecimalStringToPositiveInteger<rest>>,
+                          '........'
+                        >
+                      : str extends `${infer rest}9`
+                        ? AddPositive<
+                            MultiplyPositive<Ten, DecimalStringToPositiveInteger<rest>>,
+                            '.........'
+                          >
+                        : never;
+
+type DecimalStringToInteger<str extends DecimalString> =
+  str extends `-${infer rest}`
+    ? Negate<DecimalStringToPositiveInteger<rest>>
+    : DecimalStringToPositiveInteger<str>;
+
+type DecimalDigitIntegerToDecimalString<digit extends PositiveInteger> =
+  digit extends ''
+    ? '0'
+    : digit extends '.'
+      ? '1'
+      : digit extends '..'
+        ? '2'
+        : digit extends '...'
+          ? '3'
+          : digit extends '....'
+            ? '4'
+            : digit extends '.....'
+              ? '5'
+              : digit extends '......'
+                ? '6'
+                : digit extends '.......'
+                  ? '7'
+                  : digit extends '........'
+                    ? '8'
+                    : digit extends '.........'
+                      ? '9'
+                      : never;
+
+type PositiveIntegerToDecimalString<num extends PositiveInteger> =
+  DividePositive<num, Ten> extends [infer integerPart extends PositiveInteger, infer remainder extends PositiveInteger]
+    ? integerPart extends Zero
+      ? DecimalDigitIntegerToDecimalString<remainder>
+      : `${PositiveIntegerToDecimalString<integerPart>}${DecimalDigitIntegerToDecimalString<remainder>}`
+    : never;
+
+type IntegerToDecimalString<num extends Integer> =
+  IsNegative<num> extends true
+    ? `-${PositiveIntegerToDecimalString<Abs<num>>}`
+    : PositiveIntegerToDecimalString<num>;
+
+type DecimalStringToJSNumber<str extends DecimalString> =
+  str extends `${infer num extends number}`
+    ? num
+    : never;
+
+type JSNumberToDecimalString<num extends number> =
+  `${num}`;
+
+type IntegerToJSNumber<num extends Integer> =
+  DecimalStringToJSNumber<IntegerToDecimalString<num>>;
+
+type JSNumberToInteger<num extends number> =
+  DecimalStringToInteger<JSNumberToDecimalString<num>>;
