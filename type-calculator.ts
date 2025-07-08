@@ -40,6 +40,7 @@ type DecrementPositive<num extends PositiveInteger> =
         ? rest
         : never;
 
+/* @depricated */
 type PositiveGreaterThan<num1 extends PositiveInteger, num2 extends PositiveInteger> =
   num1 extends Zero
     ? num2 extends Zero
@@ -54,6 +55,11 @@ type PositiveGreaterThan<num1 extends PositiveInteger, num2 extends PositiveInte
           ? PositiveGreaterThan<DecrementPositive<num1>, DecrementPositive<num2>>
           : never
       : never;
+
+// type PositiveGreaterThan<num1 extends PositiveInteger, num2 extends PositiveInteger> =
+//   num1 extends `${num2}${string}`
+//     ? true
+//     : false;
 
 type PositiveLessThan<num1 extends PositiveInteger, num2 extends PositiveInteger> =
   PositiveGreaterThan<num2, num1>;
@@ -504,3 +510,90 @@ type IntegerToJSNumber<num extends Integer> =
 
 type JSNumberToInteger<num extends number> =
   DecimalStringToInteger<JSNumberToDecimalString<num>>;
+
+type RationalToDecimalStringWithPrecision_2<
+  rat extends Rational,
+  fractionPartSize extends PositiveInteger,
+> =
+  fractionPartSize extends Zero
+    ? ''
+    : rat extends [infer numerator extends PositiveInteger, infer denominator extends PositiveInteger]
+      ? Divide<Multiply<numerator, Ten>, denominator> extends [infer integerPart extends PositiveInteger, infer fractionPart extends PositiveInteger]
+        ? `${
+            IntegerToDecimalString<integerPart>
+          }${
+            RationalToDecimalStringWithPrecision_2<
+              [fractionPart, denominator],
+              DecrementPositive<fractionPartSize>
+            >
+          }`
+        : never
+      : never;
+
+
+type RationalToDecimalStringWithPrecision_1<rat extends Rational, fractionPartSize extends PositiveInteger> =
+  rat extends [infer numerator extends Integer, infer denominator extends Integer]
+    ? Divide<numerator, denominator> extends [infer integerPart extends Integer, infer fractionPart extends Integer]
+      ? `${
+          IntegerToDecimalString<integerPart>
+        }.${
+          RationalToDecimalStringWithPrecision_2<
+            [fractionPart, denominator],
+            fractionPartSize
+          >
+        }`
+      : never
+    : never;
+  ;
+
+type RationalToDecimalStringWithPrecision<rat extends Rational, fractionPartSize extends PositiveInteger> =
+  RationalNormalizeSign<rat> extends [infer numerator extends Integer, infer denominator extends Integer]
+    ? IsNegative<numerator> extends true
+      ? `-${RationalToDecimalStringWithPrecision_1<
+          [Negate<numerator>, denominator],
+          fractionPartSize
+        >}`
+      : RationalToDecimalStringWithPrecision_1<rat, fractionPartSize>
+    : never;
+
+type DoubleFactorial<num extends PositiveInteger> =
+  num extends Zero
+    ? One
+    : num extends One
+      ? One
+      : MultiplyPositive<
+          DoubleFactorial<SubtractPositive<num, Two>>,
+          num
+        >;
+
+type PiOverTwo_<n extends PositiveInteger, i extends PositiveInteger = Zero, acc extends Rational = IntegerToRational<Zero>> =
+  Eq<n, i> extends true
+    ? acc
+    : PiOverTwo_<
+        n,
+        Increment<i>,
+        AddRational<
+          acc,
+          MultiplyRational<
+            [
+              DoubleFactorial<MultiplyPositive<Two, i>>, 
+              DoubleFactorial<AddPositive<MultiplyPositive<Two, i>, One>>
+            ],
+            RationalInIntegerPower<
+              [One, Two],
+              i
+            >
+          >
+        >
+      >;
+
+type Pi<n extends PositiveInteger> =
+  MultiplyRational<
+    PiOverTwo_<n>,
+    [Two, One]
+  >;
+
+type a = RationalToDecimalStringWithPrecision<
+  Pi<JSNumberToInteger<3>>,
+  JSNumberToInteger<4>
+>;
